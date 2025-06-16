@@ -121,6 +121,8 @@ public class Server extends Thread {
 					if (i == distance) {
 						board[tri1].remove(0);
 						board[tri2].add(new Piece(PlayerColor.WHITE));
+						System.out.println("Server: After move, board state at tri1 (" + tri1 + ") has " + board[tri1].size() + " pieces.");
+						System.out.println("Server: After move, board state at tri2 (" + tri2 + ") has " + board[tri2].size() + " pieces.");
 						int count = 0;
 
 						for (ArrayList<Piece> p : board) {
@@ -131,8 +133,11 @@ public class Server extends Thread {
 						System.out.println("move is legal");
 						for (ObjectOutputStream o : outPipes) {
 							try {
-
-								o.writeObject(new Message(board.clone()));
+								ArrayList<Piece>[] boardToSend = new ArrayList[24];
+								for (int j = 0; j < 24; j++) {
+								    boardToSend[j] = new ArrayList<Piece>(board[j]); // Copy each ArrayList
+								}
+								o.writeObject(new Message(boardToSend));
 								o.flush();
 								System.out.println("Board sent");
 							} catch (IOException e) {
