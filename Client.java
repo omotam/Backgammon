@@ -215,8 +215,13 @@ public class Client implements MouseListener {
 		for (int i = 0; i < 24; i++) {
 			if (triangles[i].contains(e.getX(), e.getY())) {
 				if (tri1 == -1) {
-					tri1 = i;
-					System.out.println("First triangle:" + tri1);
+				    if (board[i] != null && !board[i].isEmpty()) {
+				        tri1 = i;
+				        System.out.println("First triangle:" + tri1);
+				    } else {
+				        System.out.println("Selected triangle " + i + " is empty. Please select a triangle with pieces.");
+				    }
+
 				} else {
 					tri2 = i;
 					System.out.println("Second triangle:" + tri2);
