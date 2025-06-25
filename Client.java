@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import backgammon.Message.Type;
 import backgammon.Piece.PlayerColor;
-
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import javax.swing.*;
 
 public class Client implements MouseListener {
@@ -101,6 +103,31 @@ public class Client implements MouseListener {
 		f.setSize(right, bottom);
 		f.setResizable(false);
 		f.addMouseListener(this);
+		f.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.out.println("Window closing. Disconnecting from server...");
+                try {
+                    send(new Message(Type.EXIT));
+                    if (fromClient != null) {
+                        fromClient.close();
+                    }
+                    if (fromServer != null) {
+                        fromServer.close();
+                    }
+                    if (socket != null) {
+                        socket.close();
+                    }
+                    connected = false; // Set connected to false to stop the ReadThread
+                    System.out.println("Disconnected from server.");
+                } catch (IOException ex) {
+                    System.err.println("Error while closing client resources: " + ex.getMessage());
+                } finally {
+                    System.exit(0); // Terminate the application
+                }
+            }
+        });
+
 		int rightX = right - 50;
 		for (int i = 0; i < 6; i++) {
 			triangles[i] = new Polygon(new int[] { rightX - 50, rightX - 25, rightX },
@@ -132,7 +159,8 @@ public class Client implements MouseListener {
 		JPanel panel = new JPanel() {
 
 			public void paintComponent(Graphics g) {
-				System.out.println("Screen drawn!!");
+				
+				
 				Graphics2D g2d = (Graphics2D) g;
 				for (int i = 0; i < 24; i++) {
 					if (i % 2 == 0) {
@@ -140,13 +168,20 @@ public class Client implements MouseListener {
 					} else {
 						g.setColor(Color.BLACK);
 					}
+					
+					if (i == tri1) {
+						g.setColor(new Color(0, 128, 0));
+					}
 					g.fillPolygon(triangles[i]);
+					
+					
 
 					addPieces(i, g2d);
 				}
 
 				g2d.setColor(new Color(160, 82, 45));
 				g2d.fill(bar);
+				System.out.println("Screen drawn");
 
 			}
 
@@ -218,6 +253,7 @@ public class Client implements MouseListener {
 				    if (board[i] != null && !board[i].isEmpty()) {
 				        tri1 = i;
 				        System.out.println("First triangle:" + tri1);
+				        f.repaint();
 				    } else {
 				        System.out.println("Selected triangle " + i + " is empty. Please select a triangle with pieces.");
 				    }
@@ -228,8 +264,11 @@ public class Client implements MouseListener {
 
 					send(new Message(tri1, tri2));
 					System.out.println("message sent");
+					// Set color of triangles[tri1] to the color it was before
 					tri1 = -1;
 					tri2 = -1;
+					f.repaint();
+					
 				}
 			}
 		}

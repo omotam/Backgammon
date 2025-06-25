@@ -97,9 +97,9 @@ public class Server extends Thread {
 	public static ArrayList<Integer> roll() {
 		dice = new ArrayList<Integer>();
 		Random r = new Random();
-		int roll1 = r.nextInt(5) + 1; // Result between 1 and 6
-		int roll2 = r.nextInt(5) + 1;
-		if (roll1 == roll2) { //If the result is a double, you get 4 moves
+		int roll1 = /* r.nextInt(5) + 1; // Result between 1 and 6 */ 4;
+		int roll2 = /* r.nextInt(5) + 1; */ 4;
+		if (roll1 == roll2) { // If the result is a double, you get 4 moves
 			for (int i = 0; i < 4; i++) {
 				dice.add((Integer) roll1);
 			}
@@ -115,113 +115,119 @@ public class Server extends Thread {
 		int distance = Math.abs(tri1 - tri2);
 		if (whiteTurn) {
 			System.out.println("White turn");
-			if (tri1 > tri2) { //White can only move towards their home (towards lower-number triangles)
+			if (tri1 > tri2) { // White can only move towards their home (towards lower-number triangles)
 				for (int rollIndex = 0; rollIndex < dice.size(); rollIndex++) {
 					int i = dice.get(rollIndex);
 					if (i == distance) {
 						board[tri1].remove(0);
 						board[tri2].add(new Piece(PlayerColor.WHITE));
-						System.out.println("Server: After move, board state at tri1 (" + tri1 + ") has " + board[tri1].size() + " pieces.");
-						System.out.println("Server: After move, board state at tri2 (" + tri2 + ") has " + board[tri2].size() + " pieces.");
-						int count = 0;
-
-						for (ArrayList<Piece> p : board) {
-							System.out.println(count + " " + p.size());
-							count++;
-						}
+						System.out.println("Server: After move, board state at tri1 (" + tri1 + ") has "
+								+ board[tri1].size() + " pieces.");
+						System.out.println("Server: After move, board state at tri2 (" + tri2 + ") has "
+								+ board[tri2].size() + " pieces.");
 						dice.remove(rollIndex);
-						System.out.println("move is legal");
-						for (ObjectOutputStream o : outPipes) {
-							try {
-								ArrayList<Piece>[] boardToSend = new ArrayList[24];
-								for (int j = 0; j < 24; j++) {
-								    boardToSend[j] = new ArrayList<Piece>(board[j]); // Copy each ArrayList
-								}
-								o.writeObject(new Message(boardToSend));
-								o.flush();
-								System.out.println("Board sent");
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-
+						break;
 					}
 				}
+				int count = 0;
+
+				for (ArrayList<Piece> p : board) {
+					System.out.println(count + " " + p.size());
+					count++;
+				}
+
+				
+				System.out.println("move is legal");
+				for (ObjectOutputStream o : outPipes) {
+					try {
+						ArrayList<Piece>[] boardToSend = new ArrayList[24];
+						for (int j = 0; j < 24; j++) {
+							boardToSend[j] = new ArrayList<Piece>(board[j]); // Copy each ArrayList
+						}
+						o.writeObject(new Message(boardToSend));
+						o.flush();
+						System.out.println("Board sent");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+
 			}
 		}
 	}
 
-	private class ConnectionHandler extends Thread {
-		Socket client;
-		int id;
-		ObjectOutputStream stream;
+private class ConnectionHandler extends Thread {
+	Socket client;
+	int id;
+	ObjectOutputStream stream;
 
-		ConnectionHandler(Socket socket) {
-			client = socket;
-			id = connectCount;
-			connectCount++;
-			try {
-				stream = new ObjectOutputStream(client.getOutputStream());
+	ConnectionHandler(Socket socket) {
+		client = socket;
+		id = connectCount;
+		connectCount++;
+		try {
+			stream = new ObjectOutputStream(client.getOutputStream());
 
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			outPipes.add(stream);
-			this.start();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		outPipes.add(stream);
+		this.start();
+	}
 
-		public void run() {
-			String clientAddress = client.getInetAddress().toString();
-			System.out.println("Connection established with " + clientAddress);
-			try {
-				ObjectInputStream fromClient = new ObjectInputStream(client.getInputStream());
-				for (ObjectOutputStream o : outPipes) {
-					o.writeObject(new Message(board));
-				}
-				while (true) {
+	public void run() {
+		String clientAddress = client.getInetAddress().toString();
+		System.out.println("Connection established with " + clientAddress);
+		try {
+			ObjectInputStream fromClient = new ObjectInputStream(client.getInputStream());
+			for (ObjectOutputStream o : outPipes) {
+				o.writeObject(new Message(board));
+			}
+			while (true) {
 
-					Object message;
-					try {
-						message = fromClient.readObject();
-						System.out.println("got something from client");
-						if (message instanceof Message) {
-							if (((Message) message).getT() == Type.EXIT) {
-								for (ObjectOutputStream o : outPipes) {
-									o.writeObject("-- user" + id + "disconnected--");
-								}
-								fromClient.close();
-
-								stream.close();
-								outPipes.remove(stream);
-								client.close();
-								break;
-							} else if (((Message) message).getT() == Type.ROLL_REQUEST) {
-								ArrayList<Integer> result = roll();
-								System.out.println("rolling");
-								for (ObjectOutputStream o : outPipes) {
-									o.writeObject(new Message(result));
-								}
-							} else if (((Message) message).getT() == Type.MOVE) {
-								move(((Message) message).getTri1(), ((Message) message).getTri2());
+				Object message;
+				try {
+					message = fromClient.readObject();
+					System.out.println("got something from client");
+					if (message instanceof Message) {
+						if (((Message) message).getT() == Type.EXIT) {
+							for (ObjectOutputStream o : outPipes) {
+								o.writeObject("-- user" + id + "disconnected--");
 							}
+							fromClient.close();
 
-						} else {
-							System.out.println("user" + id + ": " + message);
+							stream.close();
+							outPipes.remove(stream);
+							client.close();
+							break;
+						} else if (((Message) message).getT() == Type.ROLL_REQUEST) {
+							ArrayList<Integer> result = roll();
+							System.out.println("rolling");
+							for (ObjectOutputStream o : outPipes) {
+								o.writeObject(new Message(result));
+							}
+						} else if (((Message) message).getT() == Type.MOVE) {
+							move(((Message) message).getTri1(), ((Message) message).getTri2());
 						}
-						// your code to send messages goes here.
-					} catch (Exception e) {
-						System.out.println("Error on connection with: " + clientAddress + ": " + e);
-					}
-				}
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				System.out.println("Error on line 215");
-				e1.printStackTrace();
 
+					} else {
+						System.out.println("user" + id + ": " + message);
+					}
+					// your code to send messages goes here.
+				} catch (Exception e) {
+					System.out.println("Error on connection with: " + clientAddress + ": " + e);
+				}
 			}
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			System.out.println("Error on line 215");
+			e1.printStackTrace();
+
 		}
+	}
+
 	}
 
 	public static void main(String[] args) {
