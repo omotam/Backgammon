@@ -322,21 +322,25 @@ public class Client implements MouseListener {
 		public void run() {
 			while (connected) {
 				try {
-					Object message = fromServer.readObject();
-					if (((Message) message).getT() == Message.Type.ROLL_RESULT) {
-						System.out.println(((((Message) message).getRoll())).toString());
-						rollResult = (((Message) message).getRoll());
+					Object m = fromServer.readObject();
+					Message message = (Message) m;
+					System.out.println("New message recieved!");
+					System.out.println(message.getT());
+					switch (message.getT()) {
+					case ROLL_RESULT:
+						System.out.println(message.getRoll().toString());
+						rollResult = message.getRoll();
 						for (int i = 0; i < 4; i++) {
-
-							if (rollResult != null && rollResult.size() > i) {
+							if (rollResult != null && rollResult.size() >= i) {
 								dice.get(i).setText(Integer.toString(rollResult.get(i)));
 							} else {
 								dice.get(i).setText(" ");
 							}
 						}
 						rollButton.setVisible(false);
-
-					} else if (((Message) message).getT() == Message.Type.BOARD) {
+						break;
+						
+					case BOARD:
 						board = ((Message) message).getBoard();
 						int count = 0;
 
@@ -344,11 +348,27 @@ public class Client implements MouseListener {
 							System.out.println(count + " " + p.size());
 							count++;
 						}
-						// board[5].remove(0);
 						System.out.println("New board state recieved");
 
 						f.repaint();
+						break;
+						
+					case PLAYER_COLOR:
+							if(message.getColor() == PlayerColor.WHITE) {
+								System.out.println("Client told they were white");
+								f.setTitle("Backgammon - White");
+							}
+							else {
+								f.setTitle("Backgammon - Black");
+							}
+							break;
+
+					default:
+						System.out.println("Unknown message!");
+						break;
 					}
+					
+					
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					System.out.println("didn't get the roll");

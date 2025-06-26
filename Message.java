@@ -3,6 +3,8 @@ package backgammon;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import backgammon.Piece.PlayerColor;
+
 public class Message implements Serializable {
 	/**
 	 * 
@@ -10,14 +12,17 @@ public class Message implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	public enum Type {
-		EXIT, ROLL_REQUEST, ROLL_RESULT, MOVE, BOARD, END_TURN, START_TURN
+		EXIT, ROLL_REQUEST, ROLL_RESULT, MOVE, BOARD, END_TURN, START_TURN, PLAYER_COLOR
 	};
 
 	Type t;
+
+	PlayerColor color;
 	ArrayList<Integer> roll;
 	volatile ArrayList<Piece>[] board;
 	int tri1;
 	int tri2;
+	
 
 	public Type getT() {
 		return t;
@@ -39,6 +44,10 @@ public class Message implements Serializable {
 		return tri2;
 	}
 
+	public PlayerColor getColor() {
+		return color;
+	}
+
 	public Message(Type type) {
 		t = type;
 	}
@@ -58,5 +67,11 @@ public class Message implements Serializable {
 		tri1 = tri1In;
 		tri2 = tri2In;
 	}
+	public Message(PlayerColor c) {
+		t = Type.PLAYER_COLOR;
+		color = c;
+	}
+
+	
 
 }
