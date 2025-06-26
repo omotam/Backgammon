@@ -97,8 +97,8 @@ public class Server extends Thread {
 	public static ArrayList<Integer> roll() {
 		dice = new ArrayList<Integer>();
 		Random r = new Random();
-		int roll1 = /* r.nextInt(5) + 1; // Result between 1 and 6 */ 4;
-		int roll2 = /* r.nextInt(5) + 1; */ 4;
+		int roll1 = /* r.nextInt(5) + 1; // Result between 1 and 6 */ 1;
+		int roll2 = /* r.nextInt(5) + 1; */ 2;
 		if (roll1 == roll2) { // If the result is a double, you get 4 moves
 			for (int i = 0; i < 4; i++) {
 				dice.add((Integer) roll1);
@@ -146,6 +146,10 @@ public class Server extends Thread {
 						o.writeObject(new Message(boardToSend));
 						o.flush();
 						System.out.println("Board sent");
+						System.out.println(dice.toString());
+						o.writeObject(new Message(dice));
+						o.flush();
+						System.out.println("Sent modified dice state");
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -203,7 +207,7 @@ public class Server extends Thread {
 						if (message instanceof Message) {
 							if (((Message) message).getT() == Type.EXIT) {
 								for (ObjectOutputStream o : outPipes) {
-									o.writeObject("-- user" + id + "disconnected--");
+									o.writeObject("-- user" + id + "disconnected --");
 								}
 								fromClient.close();
 
