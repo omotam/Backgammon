@@ -97,8 +97,8 @@ public class Server extends Thread {
 	public static ArrayList<Integer> roll() {
 		dice = new ArrayList<Integer>();
 		Random r = new Random();
-		int roll1 = /* r.nextInt(5) + 1; // Result between 1 and 6 */ 4;
-		int roll2 = /* r.nextInt(5) + 1; */ 4;
+		int roll1 = /* r.nextInt(5) + 1; // Result between 1 and 6 */ 1;
+		int roll2 = /* r.nextInt(5) + 1; */ 2;
 		if (roll1 == roll2) { // If the result is a double, you get 4 moves
 			for (int i = 0; i < 4; i++) {
 				dice.add((Integer) roll1);
@@ -126,32 +126,68 @@ public class Server extends Thread {
 						System.out.println("Server: After move, board state at tri2 (" + tri2 + ") has "
 								+ board[tri2].size() + " pieces.");
 						dice.remove(rollIndex);
+						if (dice.size() == 0) {
+							whiteTurn = !whiteTurn;
+						}
 						break;
 					}
 				}
-				int count = 0;
+				
 
-				for (ArrayList<Piece> p : board) {
-					System.out.println(count + " " + p.size());
-					count++;
-				}
-
-				System.out.println("move is legal");
-				for (ObjectOutputStream o : outPipes) {
-					try {
-						ArrayList<Piece>[] boardToSend = new ArrayList[24];
-						for (int j = 0; j < 24; j++) {
-							boardToSend[j] = new ArrayList<Piece>(board[j]); // Copy each ArrayList
+			}
+		}
+		else { // It's the black player's turn
+			System.out.println("Black turn");
+			if (tri2 > tri1) { // White can only move towards their home (towards lower-number triangles)
+				for (int rollIndex = 0; rollIndex < dice.size(); rollIndex++) {
+					int i = dice.get(rollIndex);
+					if (i == distance) {
+						board[tri1].remove(0);
+						board[tri2].add(new Piece(PlayerColor.BLACK));
+						System.out.println("Server: After move, board state at tri1 (" + tri1 + ") has "
+								+ board[tri1].size() + " pieces.");
+						System.out.println("Server: After move, board state at tri2 (" + tri2 + ") has "
+								+ board[tri2].size() + " pieces.");
+						dice.remove(rollIndex);
+						if (dice.size() == 0) {
+							whiteTurn = !whiteTurn;
 						}
-						o.writeObject(new Message(boardToSend));
-						o.flush();
-						System.out.println("Board sent");
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						break;
 					}
 				}
+			}
+		}
+		
+		int count = 0;
 
+		for (ArrayList<Piece> p : board) {
+			System.out.println(count + " " + p.size());
+			count++;
+		}
+
+		System.out.println("move is legal");
+		for (ObjectOutputStream o : outPipes) {
+			try {
+				ArrayList<Piece>[] boardToSend = new ArrayList[24];
+				for (int j = 0; j < 24; j++) {
+					boardToSend[j] = new ArrayList<Piece>(board[j]); // Copy each ArrayList
+				}
+				o.writeObject(new Message(boardToSend));
+				o.flush();
+				System.out.println("Board sent");
+				System.out.println(dice.toString());
+				
+				ArrayList<Integer> dice2 = new ArrayList<Integer>();
+				
+				for(int i: dice) {
+					dice2.add(i);
+				}
+				o.writeObject(new Message(dice2));
+				o.flush();
+				System.out.println("Sent modified dice state");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
@@ -203,7 +239,7 @@ public class Server extends Thread {
 						if (message instanceof Message) {
 							if (((Message) message).getT() == Type.EXIT) {
 								for (ObjectOutputStream o : outPipes) {
-									o.writeObject("-- user" + id + "disconnected--");
+									o.writeObject("-- user" + id + "disconnected --");
 								}
 								fromClient.close();
 

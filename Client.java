@@ -331,10 +331,9 @@ public class Client implements MouseListener {
 						System.out.println(message.getRoll().toString());
 						rollResult = message.getRoll();
 						for (int i = 0; i < 4; i++) {
-							if (rollResult != null && rollResult.size() >= i) {
+							dice.get(i).setText(" ");
+							if (rollResult != null && rollResult.size() > i) {
 								dice.get(i).setText(Integer.toString(rollResult.get(i)));
-							} else {
-								dice.get(i).setText(" ");
 							}
 						}
 						rollButton.setVisible(false);
@@ -355,7 +354,6 @@ public class Client implements MouseListener {
 						
 					case PLAYER_COLOR:
 							if(message.getColor() == PlayerColor.WHITE) {
-								System.out.println("Client told they were white");
 								f.setTitle("Backgammon - White");
 							}
 							else {
@@ -372,6 +370,7 @@ public class Client implements MouseListener {
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					System.out.println("didn't get the roll");
+					e.printStackTrace();
 				}
 
 			}
