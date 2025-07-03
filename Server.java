@@ -97,8 +97,8 @@ public class Server extends Thread {
 	public static ArrayList<Integer> roll() {
 		dice = new ArrayList<Integer>();
 		Random r = new Random();
-		int roll1 = /* r.nextInt(5) + 1; // Result between 1 and 6 */ 1;
-		int roll2 = /* r.nextInt(5) + 1; */ 2;
+		int roll1 = r.nextInt(5) + 1; // Result between 1 and 6
+		int roll2 = r.nextInt(5) + 1; 
 		if (roll1 == roll2) { // If the result is a double, you get 4 moves
 			for (int i = 0; i < 4; i++) {
 				dice.add((Integer) roll1);
@@ -113,6 +113,7 @@ public class Server extends Thread {
 	public void move(int tri1, int tri2) {
 		System.out.println("moving");
 		int distance = Math.abs(tri1 - tri2);
+		boolean changeActivePlayer = false;
 		if (whiteTurn) {
 			System.out.println("White turn");
 			if (tri1 > tri2) { // White can only move towards their home (towards lower-number triangles)
@@ -128,6 +129,7 @@ public class Server extends Thread {
 						dice.remove(rollIndex);
 						if (dice.size() == 0) {
 							whiteTurn = !whiteTurn;
+							changeActivePlayer = true;
 						}
 						break;
 					}
@@ -138,7 +140,7 @@ public class Server extends Thread {
 		}
 		else { // It's the black player's turn
 			System.out.println("Black turn");
-			if (tri2 > tri1) { // White can only move towards their home (towards lower-number triangles)
+			if (tri2 > tri1) { // Black can only move towards their home (towards higher-number triangles)
 				for (int rollIndex = 0; rollIndex < dice.size(); rollIndex++) {
 					int i = dice.get(rollIndex);
 					if (i == distance) {
@@ -151,6 +153,7 @@ public class Server extends Thread {
 						dice.remove(rollIndex);
 						if (dice.size() == 0) {
 							whiteTurn = !whiteTurn;
+							changeActivePlayer = true;
 						}
 						break;
 					}
@@ -177,14 +180,24 @@ public class Server extends Thread {
 				System.out.println("Board sent");
 				System.out.println(dice.toString());
 				
-				ArrayList<Integer> dice2 = new ArrayList<Integer>();
 				
+				ArrayList<Integer> dice2 = new ArrayList<Integer>();
 				for(int i: dice) {
 					dice2.add(i);
 				}
 				o.writeObject(new Message(dice2));
 				o.flush();
 				System.out.println("Sent modified dice state");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		if(changeActivePlayer) {
+			int currPlayerIndex = (whiteTurn)?0:1;
+			try {
+				outPipes.get(currPlayerIndex).writeObject(new Message(Type.START_TURN));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -223,6 +236,9 @@ public class Server extends Thread {
 					if (o == outPipes.get(0)) {
 						o.writeObject(new Message(PlayerColor.WHITE));
 						System.out.println("Told player they were white");
+						o.flush();
+						o.writeObject(new Message(Type.START_TURN));
+						System.out.println("Told white player it was their turn");
 					} else {
 						o.writeObject(new Message(PlayerColor.BLACK));
 						System.out.println("Told player they were black");

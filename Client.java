@@ -104,29 +104,29 @@ public class Client implements MouseListener {
 		f.setResizable(false);
 		f.addMouseListener(this);
 		f.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                System.out.println("Window closing. Disconnecting from server...");
-                try {
-                    send(new Message(Type.EXIT));
-                    if (fromClient != null) {
-                        fromClient.close();
-                    }
-                    if (fromServer != null) {
-                        fromServer.close();
-                    }
-                    if (socket != null) {
-                        socket.close();
-                    }
-                    connected = false; // Set connected to false to stop the ReadThread
-                    System.out.println("Disconnected from server.");
-                } catch (IOException ex) {
-                    System.err.println("Error while closing client resources: " + ex.getMessage());
-                } finally {
-                    System.exit(0); // Terminate the application
-                }
-            }
-        });
+			@Override
+			public void windowClosing(WindowEvent e) {
+				System.out.println("Window closing. Disconnecting from server...");
+				try {
+					send(new Message(Type.EXIT));
+					if (fromClient != null) {
+						fromClient.close();
+					}
+					if (fromServer != null) {
+						fromServer.close();
+					}
+					if (socket != null) {
+						socket.close();
+					}
+					connected = false; // Set connected to false to stop the ReadThread
+					System.out.println("Disconnected from server.");
+				} catch (IOException ex) {
+					System.err.println("Error while closing client resources: " + ex.getMessage());
+				} finally {
+					System.exit(0); // Terminate the application
+				}
+			}
+		});
 
 		int rightX = right - 50;
 		for (int i = 0; i < 6; i++) {
@@ -159,8 +159,7 @@ public class Client implements MouseListener {
 		JPanel panel = new JPanel() {
 
 			public void paintComponent(Graphics g) {
-				
-				
+
 				Graphics2D g2d = (Graphics2D) g;
 				for (int i = 0; i < 24; i++) {
 					if (i % 2 == 0) {
@@ -168,13 +167,11 @@ public class Client implements MouseListener {
 					} else {
 						g.setColor(Color.BLACK);
 					}
-					
+
 					if (i == tri1) {
 						g.setColor(new Color(0, 128, 0));
 					}
 					g.fillPolygon(triangles[i]);
-					
-					
 
 					addPieces(i, g2d);
 				}
@@ -188,7 +185,9 @@ public class Client implements MouseListener {
 		};
 
 		panel.setPreferredSize(new Dimension(right, bottom));
+		rollButton.setVisible(false);
 		panel.add(rollButton);
+
 		dice = new ArrayList<Label>();
 		JPanel holder = new JPanel();
 		holder.add(panel);
@@ -250,13 +249,14 @@ public class Client implements MouseListener {
 		for (int i = 0; i < 24; i++) {
 			if (triangles[i].contains(e.getX(), e.getY())) {
 				if (tri1 == -1) {
-				    if (board[i] != null && !board[i].isEmpty()) {
-				        tri1 = i;
-				        System.out.println("First triangle:" + tri1);
-				        f.repaint();
-				    } else {
-				        System.out.println("Selected triangle " + i + " is empty. Please select a triangle with pieces.");
-				    }
+					if (board[i] != null && !board[i].isEmpty()) {
+						tri1 = i;
+						System.out.println("First triangle:" + tri1);
+						f.repaint();
+					} else {
+						System.out
+								.println("Selected triangle " + i + " is empty. Please select a triangle with pieces.");
+					}
 
 				} else {
 					tri2 = i;
@@ -268,7 +268,7 @@ public class Client implements MouseListener {
 					tri1 = -1;
 					tri2 = -1;
 					f.repaint();
-					
+
 				}
 			}
 		}
@@ -327,6 +327,7 @@ public class Client implements MouseListener {
 					System.out.println("New message recieved!");
 					System.out.println(message.getT());
 					switch (message.getT()) {
+
 					case ROLL_RESULT:
 						System.out.println(message.getRoll().toString());
 						rollResult = message.getRoll();
@@ -338,7 +339,7 @@ public class Client implements MouseListener {
 						}
 						rollButton.setVisible(false);
 						break;
-						
+
 					case BOARD:
 						board = ((Message) message).getBoard();
 						int count = 0;
@@ -351,15 +352,22 @@ public class Client implements MouseListener {
 
 						f.repaint();
 						break;
-						
+
 					case PLAYER_COLOR:
-							if(message.getColor() == PlayerColor.WHITE) {
-								f.setTitle("Backgammon - White");
-							}
-							else {
-								f.setTitle("Backgammon - Black");
-							}
-							break;
+						if (message.getColor() == PlayerColor.WHITE) {
+							f.setTitle("Backgammon - White");
+							System.out.println("I am white");
+						} else {
+							f.setTitle("Backgammon - Black");
+							System.out.println("I am black");
+						}
+						break;
+					
+					case START_TURN:
+						rollButton.setVisible(true);
+						System.out.println("Told to start turn!");
+						f.repaint();
+						break;
 
 					default:
 						System.out.println("Unknown message!");
@@ -367,6 +375,7 @@ public class Client implements MouseListener {
 					}
 					
 					
+
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					System.out.println("didn't get the roll");
