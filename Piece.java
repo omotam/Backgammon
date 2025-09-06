@@ -16,5 +16,9 @@ public class Piece implements Serializable {
 	public PlayerColor getColor() {
 		return color;
 	}
+	
+	public boolean equals(Piece other) {
+		return color == other.getColor();
+	}
 
 }
